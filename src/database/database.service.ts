@@ -3,7 +3,7 @@ import {ConfigService} from "@nestjs/config";
 import pg from 'pg';
 
 @Injectable()
-export class DatabaseService implements OnModuleInit, OnModuleDestroy, OnModuleDestroy {
+export class DatabaseService implements OnModuleInit, OnModuleDestroy {
 
     private readonly logger = new Logger(DatabaseService.name);
     private readonly pool: pg.Pool;
