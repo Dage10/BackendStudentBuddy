@@ -6,6 +6,7 @@ import {DatabaseModule} from "./database/database.module.js";
 import {HealthModule} from "./health/health.module.js";
 import { AuthModule } from './auth/auth.module.js'
 import { StudyModule } from './study/study.module.js';
+import { QuizModule } from './quiz/quiz.module.js';
 
 @Module({
   imports: [
@@ -14,7 +15,8 @@ import { StudyModule } from './study/study.module.js';
       DatabaseModule,
       HealthModule,
       AuthModule,
-      StudyModule
+      StudyModule,
+      QuizModule
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
