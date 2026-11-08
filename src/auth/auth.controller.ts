@@ -1,6 +1,9 @@
-import {Body, Controller, Get, HttpCode, Post, Req, UseGuards} from '@nestjs/common';
+import {Body, Controller, Delete, HttpCode, Post, Req, UseGuards} from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { AuthService } from "./auth.service.js";
-import { loginSchema, registerSchema, type LoginDto, type RegisterDto } from "./auth.schemas.js";
+import {
+    deleteAccountSchema, loginSchema, registerSchema,
+    type DeleteAccountDto, type LoginDto, type RegisterDto } from "./auth.schemas.js";
 import {AuthGuard, type AuthRequest} from "./auth.guard.js";
 
 @Controller('auth')
@@ -18,10 +21,12 @@ export class AuthController {
         return this.auth.login(body);
     }
 
-    @Get('me')
+    @Delete('me')
+    @HttpCode(204)
     @UseGuards(AuthGuard)
-    me(@Req() req: AuthRequest){
-        return { id: req.userId };
+    @Throttle({ default: { limit: 5, ttl: 60_000 } })
+    deleteMe(@Req() req: AuthRequest, @Body({ schema: deleteAccountSchema }) body: DeleteAccountDto) {
+        return this.auth.deleteAccount(req.userId, body.password);
     }
 
 }

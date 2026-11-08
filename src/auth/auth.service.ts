@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { ConflictException, ForbiddenException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import argon2 from 'argon2';
 import jwt from 'jsonwebtoken';
@@ -54,6 +54,14 @@ export class AuthService {
            expiresIn: '7d',
         });
         return { accessToken };
+    }
+
+    async deleteAccount(userId: string, password: string) {
+        const { rows } = await this.db.query('SELECT password_hash FROM users WHERE id = $1', [userId]);
+        if (!rows[0] || !(await argon2.verify(rows[0].password_hash, password))) {
+            throw new ForbiddenException("Invalid password");
+        }
+        await this.db.query('DELETE FROM users WHERE id = $1', [userId]);
     }
 
 }

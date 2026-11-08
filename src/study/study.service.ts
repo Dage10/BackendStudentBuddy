@@ -1,6 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service.js';
 import { GeminiService } from './gemini.service.js';
+
+const GRADE = `count(*) FILTER (WHERE qr.is_correct)::int AS correct,
+               count(*)::int AS total,
+               count(qr.user_answer) < count(*) AS pending`
 
 @Injectable()
 export class StudyService {
@@ -8,6 +12,35 @@ export class StudyService {
         private readonly db: DatabaseService,
         private readonly gemini: GeminiService,
     ) {}
+
+    async list(userId: string) {
+        const { rows } = await this.db.query(
+            `SELECT s.id, left(s.topic, 100) AS topic, s.created_at, ${GRADE}
+                  FROM sessions s
+                  JOIN quiz_results qr ON qr.session_id = s.id
+                  WHERE s.user_id = $1
+                  GROUP BY s.id
+                  ORDER BY s.created_at DESC
+                  LIMIT 50`,
+            [userId]
+        );
+        return { sessions: rows };
+    }
+
+    async get(userId: string, sessionId: string) {
+        const { rows } = await this.db.query(
+            `SELECT s.id, s.topic, s.explanation, s.created_at, ${GRADE}
+                  FROM sessions s
+                  JOIN quiz_results qr ON qr.session_id = s.id
+                  WHERE s.id = $1 AND s.user_id = $2
+                  GROUP BY s.id`,
+                  [sessionId, userId],
+        );
+        if (!rows[0]) {
+            throw new NotFoundException('Session not found');
+        }
+        return rows[0];
+    }
 
     async create(userId: string, topic: string) {
         const { explanation, questions } = await this.gemini.generateQuiz(topic);
