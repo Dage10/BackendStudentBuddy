@@ -7,6 +7,7 @@ import {
 import {AuthGuard, type AuthRequest} from "./auth.guard.js";
 
 @Controller('auth')
+@Throttle({ default: { limit: 10, ttl: 60_000 } })
 export class AuthController {
     constructor(private readonly auth: AuthService) {}
 
@@ -24,7 +25,6 @@ export class AuthController {
     @Delete('me')
     @HttpCode(204)
     @UseGuards(AuthGuard)
-    @Throttle({ default: { limit: 5, ttl: 60_000 } })
     deleteMe(@Req() req: AuthRequest, @Body({ schema: deleteAccountSchema }) body: DeleteAccountDto) {
         return this.auth.deleteAccount(req.userId, body.password);
     }
